@@ -10,6 +10,7 @@ type SSHClient struct {
 }
 
 func NewSSHClient() *SSHClient {
+	// TODO add logging
 	return &SSHClient{
 		client: &ssh.ClientConfig{
 			User: "",

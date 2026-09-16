@@ -10,7 +10,7 @@ type HTTPClient struct {
 }
 
 func NewHTTPClient() *HTTPClient {
-
+	// TODO add logging
 	return &HTTPClient{
 		client: &http.Client{
 			Timeout: time.Second * 10,
