@@ -1,0 +1,10 @@
+steps:
+  - name: echo
+    value: "Hello world"
+
+  - name: echo
+    value: "Hello world number 2"
+
+  - name: http
+    url: https://jsonplaceholder.typicode.com/posts/1
+    method: GET
