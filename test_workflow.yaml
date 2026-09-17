@@ -11,3 +11,6 @@ steps:
 
   - name: shell
     cmd: ls
+
+  - name: shell
+    cmd: ech "Test making changes" > test.file

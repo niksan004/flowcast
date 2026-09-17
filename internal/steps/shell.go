@@ -2,8 +2,6 @@ package steps
 
 import (
 	"bytes"
-	"fmt"
-	"os"
 	"os/exec"
 	"project/internal/logger"
 )
@@ -13,17 +11,18 @@ type ShellStep struct {
 }
 
 func (step *ShellStep) Execute() error {
-	var out bytes.Buffer
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 	cmd := exec.Command("sh", "-c", step.Cmd)
-	cmd.Stdout = &out
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
-	logger.Info("\n" + out.String())
+	logger.Info(stdout.String() + "\n" + stderr.String())
 	return err
 }
 
 func (step *ShellStep) String() string {
-	return fmt.Sprintf("==== Executing ShellStep(Cmd=%s) ====", step.Cmd)
+	return logger.StringifyStruct(step)
 }
 
 func parseShell(data map[string]any) (StepExecutor, error) {

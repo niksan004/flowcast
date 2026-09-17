@@ -65,7 +65,7 @@ func (eng *Engine) Run() error {
 			return fmt.Errorf("Unknown step: %s", step.Name)
 		}
 
-		// get specific step e.g. EchoStep
+		// get specific step(StepExecutor) e.g. EchoStep
 		exec, err := fact(step.Data)
 		if err != nil {
 			return fmt.Errorf("Error while executing step: %s", step.Name)
