@@ -1,3 +1,9 @@
+inventory:
+  - host: 10.10.10.10
+    user: test1
+
+  - host: 11.10.10.10
+    user: test2
 steps:
   - name: echo
     value: "Hello world"
@@ -11,6 +17,3 @@ steps:
 
   - name: shell
     cmd: ls
-
-  - name: shell
-    cmd: ech "Test making changes" > test.file

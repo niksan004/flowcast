@@ -1,7 +1,11 @@
 package steps
 
+import (
+	"golang.org/x/crypto/ssh"
+)
+
 type StepExecutor interface {
-	Execute() error
+	Execute(sesh *ssh.Session) error
 }
 
 type StepFactory func(data map[string]any) (StepExecutor, error)

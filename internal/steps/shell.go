@@ -2,7 +2,7 @@ package steps
 
 import (
 	"bytes"
-	"os/exec"
+	"golang.org/x/crypto/ssh"
 	"project/internal/logger"
 )
 
@@ -10,13 +10,12 @@ type ShellStep struct {
 	Cmd string
 }
 
-func (step *ShellStep) Execute() error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.Command("sh", "-c", step.Cmd)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
+func (step *ShellStep) Execute(sesh *ssh.Session) error {
+	var stdout, stderr bytes.Buffer
+	sesh.Stdout = &stdout
+	sesh.Stderr = &stderr
+
+	err := sesh.Run(step.Cmd)
 	logger.Info(stdout.String() + "\n" + stderr.String())
 	return err
 }

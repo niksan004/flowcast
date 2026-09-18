@@ -2,6 +2,7 @@ package steps
 
 import (
 	"fmt"
+	"golang.org/x/crypto/ssh"
 	"project/internal/logger"
 	"strings"
 )
@@ -11,7 +12,7 @@ type HTTPStep struct {
 	Method string
 }
 
-func (step *HTTPStep) Execute() error {
+func (step *HTTPStep) Execute(sesh *ssh.Session) error {
 	switch strings.ToUpper(step.Method) {
 	case "GET":
 		logger.Info(fmt.Sprintf("GET req to: %s", step.Url))

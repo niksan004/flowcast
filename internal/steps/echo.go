@@ -2,6 +2,7 @@ package steps
 
 import (
 	"fmt"
+	"golang.org/x/crypto/ssh"
 	"project/internal/logger"
 )
 
@@ -9,7 +10,7 @@ type EchoStep struct {
 	Value string
 }
 
-func (step EchoStep) Execute() error {
+func (step EchoStep) Execute(sesh *ssh.Session) error {
 	logger.Info(step.Value)
 	return nil
 }
