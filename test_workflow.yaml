@@ -1,9 +1,9 @@
 inventory:
-  - host: 10.10.10.10
-    user: test1
+  - host: 127.0.0.1
+    user: root
 
-  - host: 11.10.10.10
-    user: test2
+  - host: 127.0.0.1
+    user: root
 steps:
   - name: echo
     value: "Hello world"
@@ -16,4 +16,11 @@ steps:
     method: GET
 
   - name: shell
-    cmd: ls
+    cmd: ls /
+
+  - name: shell
+    cmd: touch showing_that_it_works.txt
+
+
+  - name: shell
+    cmd: echo "IT WORKS!" >> showing_that_it_works.txt

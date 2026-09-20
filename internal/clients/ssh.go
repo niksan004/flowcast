@@ -26,5 +26,5 @@ func (c *SSHClient) Connect(host string, user string) (*ssh.Client, error) {
 		Timeout:         time.Second * 10,
 	}
 
-	return ssh.Dial("tcp", host+":22", cfg)
+	return ssh.Dial("tcp", host+":2222", cfg)
 }
