@@ -18,6 +18,7 @@ type Inventory struct {
 type Host struct {
 	Ip   string `yaml:"host"`
 	User string `yaml:"user"`
+	Port string `yaml:"port"`
 }
 
 // TODO: read step by step not whole file

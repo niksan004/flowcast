@@ -1,9 +1,11 @@
 inventory:
   - host: 127.0.0.1
     user: root
+    port: 2222
 
   - host: 127.0.0.1
     user: root
+    port: 2223
 steps:
   - name: echo
     value: "Hello world"

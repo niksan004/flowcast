@@ -12,7 +12,11 @@ func NewSSHClient() *SSHClient {
 	return &SSHClient{}
 }
 
-func (c *SSHClient) Connect(host string, user string) (*ssh.Client, error) {
+func (c *SSHClient) Connect(host string, user string, port string) (*ssh.Client, error) {
+	if port == "" {
+		port = "2222"
+	}
+
 	key, err := os.ReadFile("../../.ssh/id_ed25519")
 	if err != nil {
 		return nil, err
@@ -26,5 +30,5 @@ func (c *SSHClient) Connect(host string, user string) (*ssh.Client, error) {
 		Timeout:         time.Second * 10,
 	}
 
-	return ssh.Dial("tcp", host+":2222", cfg)
+	return ssh.Dial("tcp", host+":"+port, cfg)
 }

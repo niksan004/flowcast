@@ -11,7 +11,7 @@ func init() {
 }
 
 func StringifyStruct(s any) string {
-	return fmt.Sprintf("{Executing} %#v", s)
+	return fmt.Sprintf("%#v", s)
 }
 
 func Info(msg string) {

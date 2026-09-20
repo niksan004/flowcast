@@ -18,13 +18,15 @@ func NewEngine(cfg *Config, rt *Runtime) *Engine {
 	}
 }
 
+// TODO: run this in parallel for each host
 func (eng *Engine) Run() error {
 	// iterate through hosts
 	for _, host := range eng.cfg.inv.Hosts {
-		client, err := eng.rt.SshCl.Connect(host.Ip, host.User)
+		client, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
 		if err != nil {
 			return fmt.Errorf("Error while trying to connect to host: %s", err.Error())
 		}
+		logger.Info("{Connected to} " + logger.StringifyStruct(host))
 		defer client.Close()
 
 		// execute steps for each host
@@ -47,7 +49,7 @@ func (eng *Engine) Run() error {
 				return fmt.Errorf("Error while creating session for step: %s", step.Name)
 			}
 
-			logger.Info(fmt.Sprintf("%s", exec))
+			logger.Info("{Executing} " + logger.StringifyStruct(exec))
 			if err := exec.Execute(sesh); err != nil {
 				sesh.Close()
 				return err
