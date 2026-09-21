@@ -3,11 +3,11 @@ package engine
 import (
 	"gopkg.in/yaml.v3"
 	"os"
-	"project/internal/steps"
 )
 
+// TODO: add variables to Config
 type Config struct {
-	wf  *steps.Workflow
+	wf  *Workflow
 	inv *Inventory
 }
 
@@ -43,7 +43,7 @@ func NewConfig(filepath string) (*Config, error) {
 		return nil, err
 	}
 
-	wf, err := steps.UnmarshalWorkflow(fileContent)
+	wf, err := unmarshalWorkflow(fileContent)
 	if err != nil {
 		return nil, err
 	}

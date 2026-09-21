@@ -23,6 +23,14 @@ steps:
   - name: shell
     cmd: touch showing_that_it_works.txt
 
-
   - name: shell
     cmd: echo "IT WORKS!" >> showing_that_it_works.txt
+
+  - name: if
+    condition: 20 > 30
+    then:
+      - name: echo
+        value: Condition is true
+    else:
+      - name: echo
+        value: Condition is false

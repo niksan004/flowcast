@@ -43,18 +43,26 @@ func (eng *Engine) Run() error {
 				return fmt.Errorf("Error while executing step: %s", step.Name)
 			}
 
-			// create session for step
-			sesh, err := client.NewSession()
-			if err != nil {
-				return fmt.Errorf("Error while creating session for step: %s", step.Name)
-			}
-
 			logger.Info("{Executing} " + logger.StringifyStruct(exec))
-			if err := exec.Execute(sesh); err != nil {
+			if brancher, isBrancher := exec.(steps.Brancher); isBrancher {
+				_, err := brancher.Branch()
+				if err != nil {
+					return err
+				}
+			} else {
+				// create session for step
+				sesh, err := client.NewSession()
+				if err != nil {
+					return fmt.Errorf("Error while creating session for step: %s", step.Name)
+				}
+
+				// execute step
+				if err := exec.Execute(sesh); err != nil {
+					sesh.Close()
+					return err
+				}
 				sesh.Close()
-				return err
 			}
-			sesh.Close()
 		}
 	}
 
