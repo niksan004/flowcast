@@ -29,8 +29,8 @@ steps:
   - name: if
     condition: 20 > 30
     then:
-      - name: echo
-        value: Condition is true
+      - name: shell
+        cmd: echo "Condition is true!!!" >> showing_that_it_works.txt
     else:
-      - name: echo
-        value: Condition is false
+      - name: shell
+        cmd: echo "Condition is true!!!" >> showing_that_it_works.txt
