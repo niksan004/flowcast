@@ -5,7 +5,6 @@ import (
 	"os"
 )
 
-// TODO: add variables to Config
 type Config struct {
 	wf  *Workflow
 	inv *Inventory

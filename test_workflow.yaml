@@ -25,12 +25,20 @@ steps:
 
   - name: shell
     cmd: echo "IT WORKS!" >> showing_that_it_works.txt
+    save_as:
+      successful_write: "result.exitCode == 0"
+      const_for_show: 42
 
   - name: if
-    condition: 20 > 30
+    condition: "successful_write && const_for_show == 42"
     then:
       - name: shell
         cmd: echo "Condition is true!!!" >> showing_that_it_works.txt
     else:
       - name: shell
-        cmd: echo "Condition is true!!!" >> showing_that_it_works.txt
+        cmd: echo "Condition is false!!!" >> showing_that_it_works.txt
+
+      - name: shell
+        cmd: ech "Wrong"
+        save_as:
+          echo_err: result.stderr

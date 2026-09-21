@@ -10,9 +10,9 @@ type EchoStep struct {
 	Value string
 }
 
-func (step EchoStep) Execute(sesh *ssh.Session) error {
+func (step EchoStep) Execute(sesh *ssh.Session) (any, error) {
 	logger.Info(step.Value)
-	return nil
+	return nil, nil
 }
 
 func (step EchoStep) String() string {

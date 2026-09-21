@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"github.com/expr-lang/expr"
 	"golang.org/x/crypto/ssh"
 	"project/internal/logger"
 	"project/internal/steps"
@@ -20,7 +21,7 @@ func NewEngine(cfg *Config, rt *Runtime) *Engine {
 }
 
 // execute steps for each host
-func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client) error {
+func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any) error {
 	for _, step := range stepsSlice {
 		// get step factory for specific step
 		fact, exists := steps.Registry[step.Name]
@@ -37,13 +38,13 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client) error {
 		logger.Info("{Executing} " + logger.StringifyStruct(exec))
 		// check if there is branching in the workflow
 		if brancher, isBrancher := exec.(steps.Brancher); isBrancher {
-			nextSteps, err := brancher.Branch()
+			nextSteps, err := brancher.Branch(env)
 			if err != nil {
 				return err
 			}
 
 			// recursively run the steps after branching
-			if err := RunSteps(nextSteps, client); err != nil {
+			if err := RunSteps(nextSteps, client, env); err != nil {
 				return err
 			}
 		} else {
@@ -54,11 +55,25 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client) error {
 			}
 
 			// execute step
-			if err := exec.Execute(sesh); err != nil {
+			returnVals, err := exec.Execute(sesh)
+			if err != nil {
 				sesh.Close()
 				return err
 			}
 			sesh.Close()
+
+			// save workflow variables if there are any
+			if len(step.SaveAs) != 0 {
+				for varName, path := range step.SaveAs {
+					temp_env := map[string]any{"result": returnVals}
+					val, err := expr.Eval(path, temp_env)
+					if err != nil {
+						return err
+					}
+					env[varName] = val
+				}
+			}
+			logger.Info("Env: " + logger.StringifyStruct(env))
 		}
 	}
 
@@ -69,6 +84,10 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client) error {
 func (eng *Engine) RunEngine() error {
 	// iterate through hosts
 	for _, host := range eng.cfg.inv.Hosts {
+		// environment
+		env := map[string]any{}
+
+		// client used for ssh
 		client, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
 		if err != nil {
 			return fmt.Errorf("Error while trying to connect to host: %s", err.Error())
@@ -76,7 +95,8 @@ func (eng *Engine) RunEngine() error {
 		logger.Info("{Connected to} " + logger.StringifyStruct(host))
 		defer client.Close()
 
-		if err := RunSteps(eng.cfg.wf.Steps, client); err != nil {
+		// run steps
+		if err := RunSteps(eng.cfg.wf.Steps, client, env); err != nil {
 			return err
 		}
 	}

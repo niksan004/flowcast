@@ -6,12 +6,13 @@ import (
 )
 
 type RawStep struct {
-	Name string         `yaml:"name"`
-	Data map[string]any `yaml:",inline"`
+	Name   string            `yaml:"name"`
+	SaveAs map[string]string `yaml:"save_as"`
+	Data   map[string]any    `yaml:",inline"`
 }
 
 type StepExecutor interface {
-	Execute(sesh *ssh.Session) error
+	Execute(sesh *ssh.Session) (any, error)
 }
 
 type StepFactory func(data map[string]any) (StepExecutor, error)

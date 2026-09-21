@@ -12,14 +12,14 @@ type HTTPStep struct {
 	Method string
 }
 
-func (step *HTTPStep) Execute(sesh *ssh.Session) error {
+func (step *HTTPStep) Execute(sesh *ssh.Session) (any, error) {
 	switch strings.ToUpper(step.Method) {
 	case "GET":
 		logger.Info(fmt.Sprintf("GET req to: %s", step.Url))
 	case "POST":
 		logger.Info(fmt.Sprintf("POST req to: %s", step.Url))
 	}
-	return nil
+	return nil, nil
 }
 
 func (step *HTTPStep) String() string {

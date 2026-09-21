@@ -7,7 +7,7 @@ import (
 )
 
 type Brancher interface {
-	Branch() ([]RawStep, error)
+	Branch(env map[string]any) ([]RawStep, error)
 }
 
 type IfStep struct {
@@ -17,19 +17,19 @@ type IfStep struct {
 }
 
 // dummy function so this satisies StepExecutor
-func (step *IfStep) Execute(sesh *ssh.Session) error {
-	return nil
+func (step *IfStep) Execute(sesh *ssh.Session) (any, error) {
+	return nil, nil
 }
 
-func (step *IfStep) Branch() ([]RawStep, error) {
-	res, err := expr.Eval(step.Condition, map[string]string{"dummy": "env"})
+func (step *IfStep) Branch(env map[string]any) ([]RawStep, error) {
+	res, err := expr.Eval(step.Condition, env)
 	if err != nil {
 		return nil, err
 	}
 
 	val, ok := res.(bool)
 	if !ok {
-		return nil, fmt.Errorf("condition did not evaluate to a bool: %v", val)
+		return nil, fmt.Errorf("Condition did not evaluate to a bool: %v", val)
 	}
 
 	if val {
