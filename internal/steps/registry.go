@@ -22,6 +22,7 @@ var Registry = map[string]StepFactory{
 	"http":  parseHTTP,
 	"shell": parseShell,
 	"if":    parseIf,
+	"for":   parseFor,
 }
 
 func mapToStruct(data map[string]any, out any) error {

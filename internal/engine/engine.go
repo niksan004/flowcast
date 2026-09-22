@@ -36,9 +36,28 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 		}
 
 		logger.Info("{Executing} " + logger.StringifyStruct(exec))
+
+		// determine how to execute next steps; normal step, if or loop
+		switch exec := exec.(type) {
+		// check if there is a loop in the workflow
+		case steps.Looper:
+			// recursively loop steps if condition is true
+			// condition returns steps if true and empty slice if false
+			for {
+				nextSteps, err := exec.Loop(env)
+				if err != nil {
+					return err
+				}
+				if len(nextSteps) == 0 {
+					break
+				}
+				if err := RunSteps(nextSteps, client, env); err != nil {
+					return err
+				}
+			}
 		// check if there is branching in the workflow
-		if brancher, isBrancher := exec.(steps.Brancher); isBrancher {
-			nextSteps, err := brancher.Branch(env)
+		case steps.Brancher:
+			nextSteps, err := exec.Branch(env)
 			if err != nil {
 				return err
 			}
@@ -47,7 +66,8 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			if err := RunSteps(nextSteps, client, env); err != nil {
 				return err
 			}
-		} else {
+		// normal step
+		default:
 			// create session for step
 			sesh, err := client.NewSession()
 			if err != nil {
@@ -64,14 +84,18 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 
 			// save workflow variables if there are any
 			if len(step.SaveAs) != 0 {
+				// temporarily add return vals to env for evaluating save_as
+				env["result"] = returnVals
+				// evaluate save_as
 				for varName, path := range step.SaveAs {
-					temp_env := map[string]any{"result": returnVals}
-					val, err := expr.Eval(path, temp_env)
+					val, err := expr.Eval(path, env)
 					if err != nil {
 						return err
 					}
 					env[varName] = val
 				}
+				// remove return vals
+				env["result"] = nil
 			}
 			logger.Info("Env: " + logger.StringifyStruct(env))
 		}
@@ -84,7 +108,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 func (eng *Engine) RunEngine() error {
 	// iterate through hosts
 	for _, host := range eng.cfg.inv.Hosts {
-		// environment
+		// gloal environment for the workflow
 		env := map[string]any{}
 
 		// client used for ssh

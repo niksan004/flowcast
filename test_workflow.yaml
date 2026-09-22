@@ -18,7 +18,7 @@ steps:
     method: GET
 
   - name: shell
-    cmd: ls /
+    cmd: rm showing_that_it_works.txt && rm count.txt
 
   - name: shell
     cmd: touch showing_that_it_works.txt
@@ -42,3 +42,16 @@ steps:
         cmd: ech "Wrong"
         save_as:
           echo_err: result.stderr
+
+  - name: echo
+    value: just for creating var
+    save_as:
+      count: 1
+
+  - name: for
+    condition: "count < 3"
+    do:
+      - name: shell
+        cmd: echo "Counting" >> count.txt
+        save_as:
+          count: "count + 1"
