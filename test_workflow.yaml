@@ -43,8 +43,7 @@ steps:
         save_as:
           echo_err: result.stderr
 
-  - name: echo
-    value: just for creating var
+  - name: set_var
     save_as:
       count: 1
 

@@ -18,11 +18,12 @@ type StepExecutor interface {
 type StepFactory func(data map[string]any) (StepExecutor, error)
 
 var Registry = map[string]StepFactory{
-	"echo":  parseEcho,
-	"http":  parseHTTP,
-	"shell": parseShell,
-	"if":    parseIf,
-	"for":   parseFor,
+	"set_var": parseSetVar,
+	"echo":    parseEcho,
+	"http":    parseHTTP,
+	"shell":   parseShell,
+	"if":      parseIf,
+	"for":     parseFor,
 }
 
 func mapToStruct(data map[string]any, out any) error {

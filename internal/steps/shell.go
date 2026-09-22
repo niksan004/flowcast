@@ -34,10 +34,6 @@ func (step *ShellStep) Execute(sesh *ssh.Session) (any, error) {
 	}, nil
 }
 
-func (step *ShellStep) String() string {
-	return logger.StringifyStruct(step)
-}
-
 func parseShell(data map[string]any) (StepExecutor, error) {
 	var step ShellStep
 
