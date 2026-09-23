@@ -20,7 +20,6 @@ type Host struct {
 	Port string `yaml:"port"`
 }
 
-// TODO: read step by step not whole file
 func readFile(filepath string) ([]byte, error) {
 	file, err := os.ReadFile(filepath)
 	return file, err

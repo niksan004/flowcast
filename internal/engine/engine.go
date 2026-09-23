@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"project/internal/logger"
 	"project/internal/steps"
+	"sync"
 )
 
 type Engine struct {
@@ -32,7 +33,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 		// get specific step(StepExecutor) e.g. EchoStep
 		exec, err := fact(step.Data)
 		if err != nil {
-			return fmt.Errorf("Error while executing step: %s", step.Name)
+			return fmt.Errorf("Error while executing step %s: %w", step.Name, err)
 		}
 
 		logger.Info("{Executing} " + logger.StringifyStruct(exec))
@@ -104,26 +105,48 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 	return nil
 }
 
-// TODO: run this in parallel for each host
-func (eng *Engine) RunEngine() error {
+func (eng *Engine) SetupAndRunSteps(host Host) error {
+	// gloal environment for the workflow
+	env := map[string]any{}
+
+	// client used for ssh
+	client, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
+	if err != nil {
+		return fmt.Errorf("Error while trying to connect to host: %w", err.Error())
+	}
+	logger.Info("{Connected to} " + logger.StringifyStruct(host))
+	defer client.Close()
+
+	return RunSteps(eng.cfg.wf.Steps, client, env)
+}
+
+type EngineResult struct {
+	Host string
+	Err  error
+}
+
+func (eng *Engine) RunEngine() []EngineResult {
+	var wg sync.WaitGroup
+	resultCh := make(chan EngineResult, len(eng.cfg.inv.Hosts))
+
 	// iterate through hosts
 	for _, host := range eng.cfg.inv.Hosts {
-		// gloal environment for the workflow
-		env := map[string]any{}
-
-		// client used for ssh
-		client, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
-		if err != nil {
-			return fmt.Errorf("Error while trying to connect to host: %s", err.Error())
-		}
-		logger.Info("{Connected to} " + logger.StringifyStruct(host))
-		defer client.Close()
-
-		// run steps
-		if err := RunSteps(eng.cfg.wf.Steps, client, env); err != nil {
-			return err
-		}
+		// run steps concurrently
+		wg.Add(1)
+		go func(h Host) {
+			defer wg.Done()
+			err := eng.SetupAndRunSteps(h)
+			resultCh <- EngineResult{h.Ip, err}
+		}(host)
 	}
 
-	return nil
+	// blocks until all routines call Done()
+	wg.Wait()
+
+	results := make([]EngineResult, 0, len(eng.cfg.inv.Hosts))
+	for range eng.cfg.inv.Hosts {
+		results = append(results, <-resultCh)
+	}
+
+	return results
 }

@@ -25,8 +25,7 @@ func main() {
 	logger.Info("Successfully created runtime")
 
 	eng := engine.NewEngine(cfg, rt)
-	if err := eng.RunEngine(); err != nil {
-		logger.Error(err.Error(), err)
-	}
+	res := eng.RunEngine()
+	logger.Info(logger.StringifyStruct(res))
 	logger.Info("Successfully ran workflow")
 }
