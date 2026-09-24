@@ -26,6 +26,8 @@ func main() {
 
 	eng := engine.NewEngine(cfg, rt)
 	res := eng.RunEngine()
-	logger.Info(logger.StringifyStruct(res))
+	for _, v := range res {
+		logger.Info(fmt.Sprintf("Host: %s, Err: %w", v.Host, v.Err))
+	}
 	logger.Info("Successfully ran workflow")
 }

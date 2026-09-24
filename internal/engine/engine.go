@@ -30,8 +30,14 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			return fmt.Errorf("Unknown step: %s", step.Name)
 		}
 
+		// render templates in Data
+		renderedData, err := renderData(step.Data, env)
+		if err != nil {
+			return err
+		}
+
 		// get specific step(StepExecutor) e.g. EchoStep
-		exec, err := fact(step.Data)
+		exec, err := fact(renderedData)
 		if err != nil {
 			return fmt.Errorf("Error while executing step %s: %w", step.Name, err)
 		}
@@ -72,7 +78,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			// create session for step
 			sesh, err := client.NewSession()
 			if err != nil {
-				return fmt.Errorf("Error while creating session for step: %s", step.Name)
+				return fmt.Errorf("Error while creating session for step %s: %w", step.Name, err)
 			}
 
 			// execute step
@@ -96,7 +102,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 					env[varName] = val
 				}
 				// remove return vals
-				env["result"] = nil
+				delete(env, "result")
 			}
 			logger.Info("Env: " + logger.StringifyStruct(env))
 		}
@@ -112,7 +118,7 @@ func (eng *Engine) SetupAndRunSteps(host Host) error {
 	// client used for ssh
 	client, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
 	if err != nil {
-		return fmt.Errorf("Error while trying to connect to host: %w", err.Error())
+		return fmt.Errorf("Error while trying to connect to host: %w", err)
 	}
 	logger.Info("{Connected to} " + logger.StringifyStruct(host))
 	defer client.Close()

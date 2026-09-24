@@ -51,6 +51,6 @@ steps:
     condition: "count < 3"
     do:
       - name: shell
-        cmd: echo "Counting" >> count.txt
+        cmd: "echo Counting {{ count }} >> count.txt"
         save_as:
           count: "count + 1"
