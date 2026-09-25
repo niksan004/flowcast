@@ -1,16 +1,33 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log/slog"
-	"os"
 	"project/internal/engine"
 	_ "project/internal/logger"
 )
 
+var privSshKey string
+
+func init() {
+	const (
+		defaultPrivSshKey = "id_ed25519"
+		usage             = `private ssh key used to establish ssh connection to remote hosts;
+if key name contains '/' it will be used as a path,
+if not an ssh key with the given name will be searched for in ~/.ssh`
+	)
+
+	flag.StringVar(&privSshKey, "ssh_key", defaultPrivSshKey, usage)
+	flag.StringVar(&privSshKey, "k", defaultPrivSshKey, usage+" (shorthand)")
+}
+
 func main() {
-	// get filepath from command args
-	filepath := os.Args[1]
+	// parse flags
+	flag.Parse()
+
+	// get workflow filepath from command args
+	filepath := flag.Arg(0)
 
 	// create config from file
 	cfg, err := engine.NewConfig(filepath)
@@ -19,7 +36,7 @@ func main() {
 	}
 	slog.Info(fmt.Sprintf("Successfully created config from %s", filepath))
 
-	rt, err := engine.NewRuntime()
+	rt, err := engine.NewRuntime(privSshKey)
 	if err != nil {
 		slog.Error(err.Error(), err)
 	}

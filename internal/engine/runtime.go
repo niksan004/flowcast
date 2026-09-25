@@ -9,9 +9,9 @@ type Runtime struct {
 	SshCl  *clients.SSHClient
 }
 
-func NewRuntime() (*Runtime, error) {
+func NewRuntime(sshKey string) (*Runtime, error) {
 	return &Runtime{
 		HttpCl: clients.NewHTTPClient(),
-		SshCl:  clients.NewSSHClient(),
+		SshCl:  clients.NewSSHClient(sshKey),
 	}, nil
 }
