@@ -28,7 +28,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 		// get step factory for specific step
 		fact, exists := steps.Registry[step.Name]
 		if !exists {
-			return fmt.Errorf("Unknown step: %s", step.Name)
+			return fmt.Errorf("unknown step: %s", step.Name)
 		}
 
 		// render templates in Data
@@ -40,7 +40,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 		// get specific step(StepExecutor) e.g. EchoStep
 		exec, err := fact(renderedData)
 		if err != nil {
-			return fmt.Errorf("Error while executing step %s: %w", step.Name, err)
+			return fmt.Errorf("error while executing step %s: %w", step.Name, err)
 		}
 
 		log.Info("{Executing} " + logger.StringifyStruct(exec))
@@ -79,12 +79,12 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			// create session for step
 			sesh, err := client.NewSession()
 			if err != nil {
-				return fmt.Errorf("Error while creating session for step %s: %w", step.Name, err)
+				return fmt.Errorf("error while creating session for step %s: %w", step.Name, err)
 			}
 
 			// execute step
 			returnVals, err := exec.Execute(sesh)
-			log.Info("Return values: " + logger.StringifyStruct(returnVals))
+			log.Info("return values: " + logger.StringifyStruct(returnVals))
 			if err != nil {
 				sesh.Close()
 				return err
@@ -106,7 +106,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 				// remove return vals
 				delete(env, "result")
 			}
-			log.Info("Env: " + logger.StringifyStruct(env))
+			log.Info("env: " + logger.StringifyStruct(env))
 		}
 	}
 
@@ -117,22 +117,22 @@ func (eng *Engine) SetupAndRunSteps(host Host) error {
 	// gloal environment for the workflow
 	env := map[string]any{}
 
+	// per-host logger
+	hostLog := slog.With("host", fmt.Sprintf("%s:%s", host.Ip, host.Port))
+
 	// client used for ssh
 	client, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
 	if err != nil {
-		return fmt.Errorf("Error while trying to connect to host: %w", err)
+		return fmt.Errorf("error while trying to connect to host: %w", err)
 	}
-	slog.Info("{Connected to} " + logger.StringifyStruct(host))
+	hostLog.Info("{Connected to} " + logger.StringifyStruct(host))
 	defer client.Close()
-
-	// per-host logger
-	hostLog := slog.With("host", fmt.Sprintf("%s:%s", host.Ip, host.Port))
 
 	return RunSteps(eng.cfg.wf.Steps, client, env, hostLog)
 }
 
 type EngineResult struct {
-	Host string
+	Host Host
 	Err  error
 }
 
@@ -147,7 +147,7 @@ func (eng *Engine) RunEngine() []EngineResult {
 		go func(h Host) {
 			defer wg.Done()
 			err := eng.SetupAndRunSteps(h)
-			resultCh <- EngineResult{h.Ip, err}
+			resultCh <- EngineResult{h, err}
 		}(host)
 	}
 

@@ -28,7 +28,7 @@ func (step *ForStep) Loop(env map[string]any) ([]RawStep, error) {
 
 	val, ok := res.(bool)
 	if !ok {
-		return nil, fmt.Errorf("Condition did not evaluate to a bool: %v", val)
+		return nil, fmt.Errorf("Condition did not evaluate to a bool: %v", res)
 	}
 
 	if val {

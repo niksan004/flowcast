@@ -20,7 +20,7 @@ func NewSSHClient(sshKey string) *SSHClient {
 func (c *SSHClient) Connect(host string, user string, port string) (*ssh.Client, error) {
 	// handle port
 	if port == "" {
-		port = "2222"
+		port = "22"
 	}
 
 	// handle 2 cases of private ssh key

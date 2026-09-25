@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"os"
 	"project/internal/engine"
 	_ "project/internal/logger"
 )
@@ -22,9 +23,11 @@ if not an ssh key with the given name will be searched for in ~/.ssh`
 	flag.StringVar(&privSshKey, "k", defaultPrivSshKey, usage+" (shorthand)")
 }
 
-func main() {
-	// parse flags
-	flag.Parse()
+func run() error {
+	if flag.NArg() == 0 {
+		flag.Usage()
+		return fmt.Errorf("not enough arguments")
+	}
 
 	// get workflow filepath from command args
 	filepath := flag.Arg(0)
@@ -32,20 +35,43 @@ func main() {
 	// create config from file
 	cfg, err := engine.NewConfig(filepath)
 	if err != nil {
-		slog.Error(err.Error(), err)
+		return fmt.Errorf("failed to create config from %s: %w", filepath, err)
 	}
-	slog.Info(fmt.Sprintf("Successfully created config from %s", filepath))
+	slog.Info("successfully created config from", "filepath", filepath)
 
 	rt, err := engine.NewRuntime(privSshKey)
 	if err != nil {
-		slog.Error(err.Error(), err)
+		return fmt.Errorf("failed to create runtime: %w", err)
 	}
-	slog.Info("Successfully created runtime")
+	slog.Info("successfully created runtime")
 
 	eng := engine.NewEngine(cfg, rt)
 	res := eng.RunEngine()
+	failedHost := false
 	for _, v := range res {
-		slog.Info(fmt.Sprintf("Host: %s:%s, Err: %w", v.Host, v.Err))
+		if v.Err != nil {
+			failedHost = true
+			slog.Error("host finished", "host", v.Host, "err", v.Err)
+		} else {
+			slog.Info("host finished", "host", v.Host)
+		}
 	}
-	slog.Info("Successfully ran workflow")
+
+	if failedHost {
+		return fmt.Errorf("a host has failed")
+	}
+	slog.Info("successfully ran workflow")
+
+	return nil
+}
+
+func main() {
+	// parse flags
+	flag.Parse()
+
+	// run program
+	if err := run(); err != nil {
+		slog.Error("run failed", "err", err)
+		os.Exit(1)
+	}
 }

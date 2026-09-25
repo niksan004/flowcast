@@ -21,6 +21,8 @@ func (step *ShellStep) Execute(sesh *ssh.Session) (any, error) {
 		var exitErr *ssh.ExitError
 		if errors.As(err, &exitErr) {
 			exitCode = exitErr.ExitStatus()
+		} else {
+			return nil, err
 		}
 	}
 
