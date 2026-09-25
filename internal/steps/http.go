@@ -3,7 +3,6 @@ package steps
 import (
 	"fmt"
 	"golang.org/x/crypto/ssh"
-	"project/internal/logger"
 	"strings"
 )
 
@@ -15,9 +14,9 @@ type HTTPStep struct {
 func (step *HTTPStep) Execute(sesh *ssh.Session) (any, error) {
 	switch strings.ToUpper(step.Method) {
 	case "GET":
-		logger.Info(fmt.Sprintf("GET req to: %s", step.Url))
+		return fmt.Sprintf("GET req to: %s", step.Url), nil
 	case "POST":
-		logger.Info(fmt.Sprintf("POST req to: %s", step.Url))
+		return fmt.Sprintf("POST req to: %s", step.Url), nil
 	}
 	return nil, nil
 }

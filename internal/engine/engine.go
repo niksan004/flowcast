@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/expr-lang/expr"
 	"golang.org/x/crypto/ssh"
+	"log/slog"
 	"project/internal/logger"
 	"project/internal/steps"
 	"sync"
@@ -22,7 +23,7 @@ func NewEngine(cfg *Config, rt *Runtime) *Engine {
 }
 
 // execute steps for each host
-func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any) error {
+func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any, log *slog.Logger) error {
 	for _, step := range stepsSlice {
 		// get step factory for specific step
 		fact, exists := steps.Registry[step.Name]
@@ -42,7 +43,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			return fmt.Errorf("Error while executing step %s: %w", step.Name, err)
 		}
 
-		logger.Info("{Executing} " + logger.StringifyStruct(exec))
+		log.Info("{Executing} " + logger.StringifyStruct(exec))
 
 		// determine how to execute next steps; normal step, if or loop
 		switch exec := exec.(type) {
@@ -58,7 +59,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 				if len(nextSteps) == 0 {
 					break
 				}
-				if err := RunSteps(nextSteps, client, env); err != nil {
+				if err := RunSteps(nextSteps, client, env, log); err != nil {
 					return err
 				}
 			}
@@ -70,7 +71,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			}
 
 			// recursively run the steps after branching
-			if err := RunSteps(nextSteps, client, env); err != nil {
+			if err := RunSteps(nextSteps, client, env, log); err != nil {
 				return err
 			}
 		// normal step
@@ -83,6 +84,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 
 			// execute step
 			returnVals, err := exec.Execute(sesh)
+			log.Info("Return values: " + logger.StringifyStruct(returnVals))
 			if err != nil {
 				sesh.Close()
 				return err
@@ -104,7 +106,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 				// remove return vals
 				delete(env, "result")
 			}
-			logger.Info("Env: " + logger.StringifyStruct(env))
+			log.Info("Env: " + logger.StringifyStruct(env))
 		}
 	}
 
@@ -120,10 +122,13 @@ func (eng *Engine) SetupAndRunSteps(host Host) error {
 	if err != nil {
 		return fmt.Errorf("Error while trying to connect to host: %w", err)
 	}
-	logger.Info("{Connected to} " + logger.StringifyStruct(host))
+	slog.Info("{Connected to} " + logger.StringifyStruct(host))
 	defer client.Close()
 
-	return RunSteps(eng.cfg.wf.Steps, client, env)
+	// per-host logger
+	hostLog := slog.With("host", fmt.Sprintf("%s:%s", host.Ip, host.Port))
+
+	return RunSteps(eng.cfg.wf.Steps, client, env, hostLog)
 }
 
 type EngineResult struct {

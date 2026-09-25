@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"project/internal/engine"
-	"project/internal/logger"
+	_ "project/internal/logger"
 )
 
 func main() {
@@ -14,20 +15,20 @@ func main() {
 	// create config from file
 	cfg, err := engine.NewConfig(filepath)
 	if err != nil {
-		logger.Error(err.Error(), err)
+		slog.Error(err.Error(), err)
 	}
-	logger.Info(fmt.Sprintf("Successfully created config from %s", filepath))
+	slog.Info(fmt.Sprintf("Successfully created config from %s", filepath))
 
 	rt, err := engine.NewRuntime()
 	if err != nil {
-		logger.Error(err.Error(), err)
+		slog.Error(err.Error(), err)
 	}
-	logger.Info("Successfully created runtime")
+	slog.Info("Successfully created runtime")
 
 	eng := engine.NewEngine(cfg, rt)
 	res := eng.RunEngine()
 	for _, v := range res {
-		logger.Info(fmt.Sprintf("Host: %s, Err: %w", v.Host, v.Err))
+		slog.Info(fmt.Sprintf("Host: %s:%s, Err: %w", v.Host, v.Err))
 	}
-	logger.Info("Successfully ran workflow")
+	slog.Info("Successfully ran workflow")
 }

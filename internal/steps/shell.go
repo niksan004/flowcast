@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"golang.org/x/crypto/ssh"
-	"project/internal/logger"
 )
 
 type ShellStep struct {
@@ -24,8 +23,6 @@ func (step *ShellStep) Execute(sesh *ssh.Session) (any, error) {
 			exitCode = exitErr.ExitStatus()
 		}
 	}
-
-	logger.Info(stdout.String() + "\n" + stderr.String())
 
 	return map[string]any{
 		"stdout":   stdout.String(),

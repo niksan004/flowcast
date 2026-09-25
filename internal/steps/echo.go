@@ -2,7 +2,6 @@ package steps
 
 import (
 	"golang.org/x/crypto/ssh"
-	"project/internal/logger"
 )
 
 type EchoStep struct {
@@ -10,8 +9,7 @@ type EchoStep struct {
 }
 
 func (step EchoStep) Execute(sesh *ssh.Session) (any, error) {
-	logger.Info(step.Value)
-	return nil, nil
+	return step.Value, nil
 }
 
 func parseEcho(data map[string]any) (StepExecutor, error) {
