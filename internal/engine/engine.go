@@ -28,7 +28,7 @@ func runSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 		// get step factory for specific step
 		fact, exists := steps.Registry[step.Name]
 		if !exists {
-			return fmt.Errorf("unknown step %s: %w", step.Name, exists)
+			return fmt.Errorf("unknown step %s", step.Name)
 		}
 
 		// render templates in Data
@@ -54,7 +54,7 @@ func runSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			for {
 				nextSteps, err := exec.Loop(env)
 				if err != nil {
-					return fmt.Errorf("failed to loop: %w", step.Name, err)
+					return fmt.Errorf("failed to loop: %w", err)
 				}
 				if len(nextSteps) == 0 {
 					break
@@ -72,7 +72,7 @@ func runSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 
 			// recursively run the steps after branching
 			if err := runSteps(nextSteps, client, env, log); err != nil {
-				return fmt.Errorf("failed to run steps while branching", err)
+				return fmt.Errorf("failed to run steps while branching: %w", err)
 			}
 		// normal step
 		default:
