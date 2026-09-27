@@ -23,7 +23,7 @@ func NewEngine(cfg *Config, rt *Runtime) *Engine {
 }
 
 // execute steps for each host
-func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any, log *slog.Logger) error {
+func runSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any, log *slog.Logger) error {
 	for _, step := range stepsSlice {
 		// get step factory for specific step
 		fact, exists := steps.Registry[step.Name]
@@ -59,7 +59,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 				if len(nextSteps) == 0 {
 					break
 				}
-				if err := RunSteps(nextSteps, client, env, log); err != nil {
+				if err := runSteps(nextSteps, client, env, log); err != nil {
 					return fmt.Errorf("failed to run steps while looping: %w", err)
 				}
 			}
@@ -71,7 +71,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			}
 
 			// recursively run the steps after branching
-			if err := RunSteps(nextSteps, client, env, log); err != nil {
+			if err := runSteps(nextSteps, client, env, log); err != nil {
 				return fmt.Errorf("failed to run steps while branching", err)
 			}
 		// normal step
@@ -128,7 +128,7 @@ func (eng *Engine) SetupAndRunSteps(host Host) error {
 	hostLog.Info("{Connected to} " + logger.StringifyStruct(host))
 	defer client.Close()
 
-	return RunSteps(eng.cfg.wf.Steps, client, env, hostLog)
+	return runSteps(eng.cfg.wf.Steps, client, env, hostLog)
 }
 
 type EngineResult struct {
