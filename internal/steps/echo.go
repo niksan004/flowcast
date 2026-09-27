@@ -8,7 +8,7 @@ type EchoStep struct {
 	Value string
 }
 
-func (step EchoStep) Execute(sesh *ssh.Session) (any, error) {
+func (step *EchoStep) Execute(sesh *ssh.Session) (any, error) {
 	return step.Value, nil
 }
 
@@ -19,5 +19,5 @@ func parseEcho(data map[string]any) (StepExecutor, error) {
 		return nil, err
 	}
 
-	return step, nil
+	return &step, nil
 }

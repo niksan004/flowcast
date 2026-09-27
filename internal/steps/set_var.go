@@ -6,7 +6,7 @@ import (
 
 type SetVarStep struct{}
 
-func (step SetVarStep) Execute(sesh *ssh.Session) (any, error) {
+func (step *SetVarStep) Execute(sesh *ssh.Session) (any, error) {
 	return nil, nil
 }
 
@@ -17,5 +17,5 @@ func parseSetVar(data map[string]any) (StepExecutor, error) {
 		return nil, err
 	}
 
-	return step, nil
+	return &step, nil
 }
