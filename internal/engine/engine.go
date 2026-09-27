@@ -28,13 +28,13 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 		// get step factory for specific step
 		fact, exists := steps.Registry[step.Name]
 		if !exists {
-			return fmt.Errorf("unknown step: %s", step.Name)
+			return fmt.Errorf("unknown step %s: %w", step.Name, exists)
 		}
 
 		// render templates in Data
 		renderedData, err := renderData(step.Data, env)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to render data for %s: %w", step.Name, err)
 		}
 
 		// get specific step(StepExecutor) e.g. EchoStep
@@ -54,25 +54,25 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			for {
 				nextSteps, err := exec.Loop(env)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to loop: %w", step.Name, err)
 				}
 				if len(nextSteps) == 0 {
 					break
 				}
 				if err := RunSteps(nextSteps, client, env, log); err != nil {
-					return err
+					return fmt.Errorf("failed to run steps while looping: %w", err)
 				}
 			}
 		// check if there is branching in the workflow
 		case steps.Brancher:
 			nextSteps, err := exec.Branch(env)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to branch: %w", err)
 			}
 
 			// recursively run the steps after branching
 			if err := RunSteps(nextSteps, client, env, log); err != nil {
-				return err
+				return fmt.Errorf("failed to run steps while branching", err)
 			}
 		// normal step
 		default:
@@ -87,7 +87,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 			log.Info("return values: " + logger.StringifyStruct(returnVals))
 			if err != nil {
 				sesh.Close()
-				return err
+				return fmt.Errorf("failed to execute step %s: %w", step.Name, err)
 			}
 			sesh.Close()
 
@@ -99,7 +99,7 @@ func RunSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 				for varName, path := range step.SaveAs {
 					val, err := expr.Eval(path, env)
 					if err != nil {
-						return err
+						return fmt.Errorf("failed to evaluate save_as condition for %s: %w", step.Name, err)
 					}
 					env[varName] = val
 				}
