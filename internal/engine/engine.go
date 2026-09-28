@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"github.com/expr-lang/expr"
 	"golang.org/x/crypto/ssh"
+	"io"
 	"log/slog"
+	"os"
+	"project/internal/clients"
 	"project/internal/logger"
 	"project/internal/steps"
 	"sync"
@@ -127,6 +130,33 @@ func (eng *Engine) SetupAndRunSteps(host Host) error {
 	}
 	hostLog.Info("{Connected to} " + logger.StringifyStruct(host))
 	defer client.Close()
+
+	// sftp connection to copy agent to remote
+	sftpCl, err := clients.SftpConnect(client)
+	if err != nil {
+		return fmt.Errorf("error while trying to open sftp connection to host: %w", err)
+	}
+	defer sftpCl.Close()
+
+	localFile, err := os.Open("agent-binary")
+	if err != nil {
+		return err
+	}
+	defer localFile.Close()
+
+	remoteFile, err := sftpCl.Create(steps.AgentPath)
+	if err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(remoteFile, localFile); err != nil {
+		return err
+	}
+	remoteFile.Close()
+
+	if err := sftpCl.Chmod(steps.AgentPath, 0755); err != nil {
+		return err
+	}
 
 	return runSteps(eng.cfg.wf.Steps, client, env, hostLog)
 }

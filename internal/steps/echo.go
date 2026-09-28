@@ -9,7 +9,7 @@ type EchoStep struct {
 }
 
 func (step *EchoStep) Execute(sesh *ssh.Session) (any, error) {
-	return step.Value, nil
+	return callAgent(sesh, "echo", map[string]any{"value": step.Value})
 }
 
 func parseEcho(data map[string]any) (StepExecutor, error) {
