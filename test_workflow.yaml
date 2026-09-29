@@ -8,7 +8,7 @@ inventory:
     port: 2223
 steps:
   - name: echo
-    value: "Hello world"
+    value: "Hello Agent"
 
   # - name: echo
   #   value: "Hello world number 2"

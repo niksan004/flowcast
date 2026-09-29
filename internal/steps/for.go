@@ -36,13 +36,3 @@ func (step *ForStep) Loop(env map[string]any) ([]RawStep, error) {
 	}
 	return nil, nil
 }
-
-func parseFor(data map[string]any) (StepExecutor, error) {
-	var step ForStep
-
-	if err := mapToStruct(data, &step); err != nil {
-		return nil, err
-	}
-
-	return &step, nil
-}

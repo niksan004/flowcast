@@ -2,6 +2,7 @@ package steps
 
 import (
 	"golang.org/x/crypto/ssh"
+	"project/internal/protocol"
 )
 
 type EchoStep struct {
@@ -9,15 +10,5 @@ type EchoStep struct {
 }
 
 func (step *EchoStep) Execute(sesh *ssh.Session) (any, error) {
-	return callAgent(sesh, "echo", map[string]any{"value": step.Value})
-}
-
-func parseEcho(data map[string]any) (StepExecutor, error) {
-	var step EchoStep
-
-	if err := mapToStruct(data, &step); err != nil {
-		return nil, err
-	}
-
-	return &step, nil
+	return callAgent(sesh, &protocol.EchoArgs{Value: step.Value})
 }

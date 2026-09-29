@@ -20,13 +20,3 @@ func (step *HTTPStep) Execute(sesh *ssh.Session) (any, error) {
 	}
 	return nil, nil
 }
-
-func parseHTTP(data map[string]any) (StepExecutor, error) {
-	var step HTTPStep
-
-	if err := mapToStruct(data, &step); err != nil {
-		return nil, err
-	}
-
-	return &step, nil
-}

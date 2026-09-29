@@ -32,13 +32,3 @@ func (step *ShellStep) Execute(sesh *ssh.Session) (any, error) {
 		"exitCode": exitCode,
 	}, nil
 }
-
-func parseShell(data map[string]any) (StepExecutor, error) {
-	var step ShellStep
-
-	if err := mapToStruct(data, &step); err != nil {
-		return nil, err
-	}
-
-	return &step, nil
-}

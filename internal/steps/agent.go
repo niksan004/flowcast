@@ -4,39 +4,48 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"strings"
+
 	"golang.org/x/crypto/ssh"
+	"project/internal/protocol"
 )
 
-const AgentPath = "/tmp/flowcast-agent"
-
-func callAgent(sesh *ssh.Session, action string, args map[string]any) (any, error) {
-	payload, err := json.Marshal(map[string]any{"action": action, "args": args})
-	fmt.Println(string(payload))
+func callAgent(sesh *ssh.Session, args protocol.Args) (protocol.Response, error) {
+	// create request to send to stdin of agent
+	req, err := json.Marshal(protocol.Request[protocol.Args]{
+		Action: args.Action(),
+		Args:   args,
+	})
 	if err != nil {
-		return nil, err
+		return protocol.Response{}, err
 	}
-
-	sesh.Stdin = bytes.NewReader(payload)
+	sesh.Stdin = bytes.NewReader(req)
 
 	var stdout bytes.Buffer
 	sesh.Stdout = &stdout
 
-	if err := sesh.Run(AgentPath); err != nil {
-		return nil, err
+	// execute agent with prepared input
+	if err := sesh.Run(protocol.AgentRemotePath); err != nil {
+		return protocol.Response{}, err
 	}
 
-	var resp struct {
-		Result any    `json:"result"`
-		Error  string `json:"error"`
+	// capture response
+	var resp protocol.Response
+
+	// json response is in stdout separated with a new line
+	// from the other output and ending in a new line
+	out := strings.TrimRight(stdout.String(), "\n\r")
+	jsonLine := ""
+	if i := strings.LastIndexByte(out, '\n'); i >= 0 {
+		jsonLine = out[i+1:]
 	}
 
-	if err := json.Unmarshal(stdout.Bytes(), &resp); err != nil {
-		return nil, err
+	if err := json.Unmarshal([]byte(jsonLine), &resp); err != nil {
+		return protocol.Response{}, err
 	}
 
 	if resp.Error != "" {
-		return nil, errors.New(resp.Error)
+		return protocol.Response{}, errors.New(resp.Error)
 	}
-	return resp.Result, nil
+	return resp, nil
 }

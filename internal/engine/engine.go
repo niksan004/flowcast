@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"github.com/expr-lang/expr"
 	"golang.org/x/crypto/ssh"
-	"io"
 	"log/slog"
-	"os"
-	"project/internal/clients"
 	"project/internal/logger"
+	"project/internal/protocol"
 	"project/internal/steps"
 	"sync"
 )
@@ -124,41 +122,19 @@ func (eng *Engine) SetupAndRunSteps(host Host) error {
 	hostLog := slog.With("host", fmt.Sprintf("%s:%s", host.Ip, host.Port))
 
 	// client used for ssh
-	client, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
+	conn, err := eng.rt.SshCl.Connect(host.Ip, host.User, host.Port)
 	if err != nil {
 		return fmt.Errorf("error while trying to connect to host: %w", err)
 	}
 	hostLog.Info("{Connected to} " + logger.StringifyStruct(host))
-	defer client.Close()
+	defer conn.Close()
 
 	// sftp connection to copy agent to remote
-	sftpCl, err := clients.SftpConnect(client)
-	if err != nil {
-		return fmt.Errorf("error while trying to open sftp connection to host: %w", err)
-	}
-	defer sftpCl.Close()
-
-	localFile, err := os.Open("agent-binary")
-	if err != nil {
-		return err
-	}
-	defer localFile.Close()
-
-	remoteFile, err := sftpCl.Create(steps.AgentPath)
-	if err != nil {
-		return err
+	if err := eng.rt.SftpCl.Upload(conn, "agent-binary", protocol.AgentRemotePath, 0755); err != nil {
+		return fmt.Errorf("error while tring to build sftp connection: %w", err)
 	}
 
-	if _, err := io.Copy(remoteFile, localFile); err != nil {
-		return err
-	}
-	remoteFile.Close()
-
-	if err := sftpCl.Chmod(steps.AgentPath, 0755); err != nil {
-		return err
-	}
-
-	return runSteps(eng.cfg.wf.Steps, client, env, hostLog)
+	return runSteps(eng.cfg.wf.Steps, conn, env, hostLog)
 }
 
 type EngineResult struct {

@@ -37,13 +37,3 @@ func (step *IfStep) Branch(env map[string]any) ([]RawStep, error) {
 	}
 	return step.Else, nil
 }
-
-func parseIf(data map[string]any) (StepExecutor, error) {
-	var step IfStep
-
-	if err := mapToStruct(data, &step); err != nil {
-		return nil, err
-	}
-
-	return &step, nil
-}

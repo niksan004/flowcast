@@ -1,9 +1,11 @@
 package agent
 
-import ()
+import (
+	"fmt"
+	"project/internal/protocol"
+)
 
-func handleEcho(args map[string]any) (any, error) {
-	value, _ := args["value"].(string)
-	// fmt.Println(value)
-	return value, nil
+func handleEcho(args protocol.EchoArgs) (any, error) {
+	fmt.Println(args.Value)
+	return args.Value, nil
 }
