@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"fmt"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
 )
@@ -15,33 +16,33 @@ type StepExecutor interface {
 	Execute(sesh *ssh.Session) (any, error)
 }
 
-type StepFactory func(data map[string]any) (StepExecutor, error)
+type StepFactory func() StepExecutor
 
-func parse[T any, PT interface {
-	*T
-	StepExecutor
-}]() StepFactory {
-	return func(data map[string]any) (StepExecutor, error) {
-		var step T
-
-		if err := mapToStruct(data, &step); err != nil {
-			return nil, err
-		}
-
-		return PT(&step), nil
-	}
-}
-
+// registry of constructors for all the step types
 var Registry = map[string]StepFactory{
-	"set_var": parse[SetVarStep](),
-	"echo":    parse[EchoStep](),
-	"http":    parse[HTTPStep](),
-	"shell":   parse[ShellStep](),
-	"if":      parse[IfStep](),
-	"for":     parse[ForStep](),
+	"echo":    func() StepExecutor { return &EchoStep{} },
+	"set_var": func() StepExecutor { return &SetVarStep{} },
+	"http":    func() StepExecutor { return &HTTPStep{} },
+	"shell":   func() StepExecutor { return &ShellStep{} },
+	"if":      func() StepExecutor { return &IfStep{} },
+	"for":     func() StepExecutor { return &ForStep{} },
 }
 
-func mapToStruct(data map[string]any, out any) error {
+func Decode(name string, data map[string]any) (StepExecutor, error) {
+	stepConstr, exists := Registry[name]
+	if !exists {
+		return nil, fmt.Errorf("unknown step %s", name)
+	}
+
+	step := stepConstr()
+	if err := mapToStruct(data, step); err != nil {
+		return nil, err
+	}
+
+	return step, nil
+}
+
+func mapToStruct(data map[string]any, out StepExecutor) error {
 	b, err := yaml.Marshal(data)
 	if err != nil {
 		return err

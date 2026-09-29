@@ -26,12 +26,6 @@ func NewEngine(cfg *Config, rt *Runtime) *Engine {
 // execute steps for each host
 func runSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any, log *slog.Logger) error {
 	for _, step := range stepsSlice {
-		// get step factory for specific step
-		fact, exists := steps.Registry[step.Name]
-		if !exists {
-			return fmt.Errorf("unknown step %s", step.Name)
-		}
-
 		// render templates in Data
 		renderedData, err := renderData(step.Data, env)
 		if err != nil {
@@ -39,9 +33,9 @@ func runSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 		}
 
 		// get specific step(StepExecutor) e.g. EchoStep
-		exec, err := fact(renderedData)
+		exec, err := steps.Decode(step.Name, renderedData)
 		if err != nil {
-			return fmt.Errorf("error while executing step %s: %w", step.Name, err)
+			return fmt.Errorf("error while decoding step %s: %w", step.Name, err)
 		}
 
 		log.Info("{Executing} " + logger.StringifyStruct(exec))
