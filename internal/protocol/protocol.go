@@ -1,19 +1,17 @@
 package protocol
 
-import (
-// "encoding/json"
-)
+import "encoding/json"
 
 const AgentRemotePath = "/tmp/flowcast-agent"
 
-type Request[T any] struct {
-	Action string `json:"action"`
-	Args   T      `json:"args"`
+type Request struct {
+	Action string          `json:"action"`
+	Args   json.RawMessage `json:"args"`
 }
 
 type Response struct {
-	Result any    `json:"result"`
-	Error  string `json:"error"`
+	Result json.RawMessage `json:"result"`
+	Error  string          `json:"error"`
 }
 
 type Args interface {
@@ -21,7 +19,17 @@ type Args interface {
 }
 
 type EchoArgs struct {
-	Value string `json:"value"`
+	Value string `json:"value" yaml:"value"`
 }
 
 func (*EchoArgs) Action() string { return "echo" }
+
+type Result interface {
+	isResult()
+}
+
+type EchoResult struct {
+	Value string `json:"value"`
+}
+
+func (*EchoResult) isResult() {}

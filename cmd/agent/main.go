@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	var req protocol.Request[json.RawMessage]
+	var req protocol.Request
 
-	// receive stdin from controller
+	// receive and decode stdin from controller
 	if err := json.NewDecoder(os.Stdin).Decode(&req); err != nil {
 		fmt.Println("invalid input: %w", err)
 	}
@@ -19,14 +19,19 @@ func main() {
 	// find correct handler
 	handler, err := agent.Decode(req)
 	if err != nil {
-		fmt.Println("error wile decoding action %w", err)
+		fmt.Println("error while decoding action %w", err)
 	}
 
 	res, err := handler.Run()
 
+	encodedRes, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println("error while encoding result: %w", err)
+	}
+
 	// build json response
 	var resp protocol.Response
-	resp.Result = res
+	resp.Result = encodedRes
 	if err != nil {
 		resp.Error = err.Error()
 	}

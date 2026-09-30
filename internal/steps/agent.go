@@ -10,14 +10,18 @@ import (
 	"project/internal/protocol"
 )
 
-func callAgent(sesh *ssh.Session, args protocol.Args) (protocol.Response, error) {
+func callAgent(sesh *ssh.Session, args protocol.Args, res protocol.Result) error {
 	// create request to send to stdin of agent
-	req, err := json.Marshal(protocol.Request[protocol.Args]{
+	encodedArgs, err := json.Marshal(args)
+	if err != nil {
+		return err
+	}
+	req, err := json.Marshal(protocol.Request{
 		Action: args.Action(),
-		Args:   args,
+		Args:   encodedArgs,
 	})
 	if err != nil {
-		return protocol.Response{}, err
+		return err
 	}
 	sesh.Stdin = bytes.NewReader(req)
 
@@ -26,7 +30,7 @@ func callAgent(sesh *ssh.Session, args protocol.Args) (protocol.Response, error)
 
 	// execute agent with prepared input
 	if err := sesh.Run(protocol.AgentRemotePath); err != nil {
-		return protocol.Response{}, err
+		return err
 	}
 
 	// capture response
@@ -41,11 +45,15 @@ func callAgent(sesh *ssh.Session, args protocol.Args) (protocol.Response, error)
 	}
 
 	if err := json.Unmarshal([]byte(jsonLine), &resp); err != nil {
-		return protocol.Response{}, err
+		return err
 	}
 
 	if resp.Error != "" {
-		return protocol.Response{}, errors.New(resp.Error)
+		return errors.New(resp.Error)
 	}
-	return resp, nil
+
+	if err := json.Unmarshal(resp.Result, res); err != nil {
+		return err
+	}
+	return nil
 }

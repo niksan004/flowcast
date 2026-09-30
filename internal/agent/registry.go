@@ -7,7 +7,7 @@ import (
 )
 
 type Runner interface {
-	Run() (any, error)
+	Run() (protocol.Result, error)
 }
 
 type Handler func() Runner
@@ -18,7 +18,7 @@ var Registry = map[string]Handler{
 }
 
 // get specific action from json
-func Decode(raw protocol.Request[json.RawMessage]) (Runner, error) {
+func Decode(raw protocol.Request) (Runner, error) {
 	actionConstr, exists := Registry[raw.Action]
 	if !exists {
 		return nil, fmt.Errorf("unknown action %s", raw.Action)

@@ -9,7 +9,7 @@ type echo struct {
 	protocol.EchoArgs
 }
 
-func (action *echo) Run() (any, error) {
+func (action *echo) Run() (protocol.Result, error) {
 	fmt.Println(action.Value)
-	return action.Value, nil
+	return &protocol.EchoResult{Value: action.Value}, nil
 }

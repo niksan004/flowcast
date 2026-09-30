@@ -6,9 +6,13 @@ import (
 )
 
 type EchoStep struct {
-	Value string
+	protocol.EchoArgs `yaml:",inline"`
 }
 
 func (step *EchoStep) Execute(sesh *ssh.Session) (any, error) {
-	return callAgent(sesh, &protocol.EchoArgs{Value: step.Value})
+	var res protocol.EchoResult
+	if err := callAgent(sesh, &step.EchoArgs, &res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
