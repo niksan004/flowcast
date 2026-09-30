@@ -5,7 +5,11 @@ import (
 	"project/internal/protocol"
 )
 
-func handleEcho(args protocol.EchoArgs) (any, error) {
-	fmt.Println(args.Value)
-	return args.Value, nil
+type echo struct {
+	protocol.EchoArgs
+}
+
+func (action *echo) Run() (any, error) {
+	fmt.Println(action.Value)
+	return action.Value, nil
 }
