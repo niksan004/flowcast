@@ -162,7 +162,7 @@ The expression is evaluated against an environment containing:
   cmd: "df -h / | tail -1"
   save_as:
     disk_line: result.stdout
-    ok: "result.exitCode == 0"
+    ok: "result.ExitCode == 0"
     limit: 90          # a literal constant works too, not just a field lookup
 ```
 

@@ -1,34 +1,18 @@
 package steps
 
 import (
-	"bytes"
-	"errors"
 	"golang.org/x/crypto/ssh"
+	"project/internal/protocol"
 )
 
 type ShellStep struct {
-	Cmd string
+	protocol.ShellArgs `yaml:",inline"`
 }
 
 func (step *ShellStep) Execute(sesh *ssh.Session) (any, error) {
-	var stdout, stderr bytes.Buffer
-	sesh.Stdout = &stdout
-	sesh.Stderr = &stderr
-	exitCode := 0
-
-	if err := sesh.Run(step.Cmd); err != nil {
-		// check error type
-		var exitErr *ssh.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitStatus()
-		} else {
-			return nil, err
-		}
+	var res protocol.ShellResult
+	if err := callAgent(sesh, &step.ShellArgs, &res); err != nil {
+		return nil, err
 	}
-
-	return map[string]any{
-		"stdout":   stdout.String(),
-		"stderr":   stderr.String(),
-		"exitCode": exitCode,
-	}, nil
+	return res, nil
 }

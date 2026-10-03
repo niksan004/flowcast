@@ -14,7 +14,8 @@ type Handler func() Runner
 
 // registry with constructors for action types
 var Registry = map[string]Handler{
-	(&protocol.EchoArgs{}).Action(): func() Runner { return &echo{} },
+	(&protocol.EchoArgs{}).Action():  func() Runner { return &echo{} },
+	(&protocol.ShellArgs{}).Action(): func() Runner { return &shell{} },
 }
 
 // get specific action from json

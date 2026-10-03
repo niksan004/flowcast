@@ -14,6 +14,7 @@ type Response struct {
 	Error  string          `json:"error"`
 }
 
+// arg definitions
 type Args interface {
 	Action() string
 }
@@ -24,6 +25,13 @@ type EchoArgs struct {
 
 func (*EchoArgs) Action() string { return "echo" }
 
+type ShellArgs struct {
+	Cmd string `json:"cmd" yaml:"cmd"`
+}
+
+func (*ShellArgs) Action() string { return "shell" }
+
+// result definitions
 type Result interface {
 	isResult()
 }
@@ -33,3 +41,11 @@ type EchoResult struct {
 }
 
 func (*EchoResult) isResult() {}
+
+type ShellResult struct {
+	Stdout   string `json:"stdout"`
+	Stdin    string `json:"stdin"`
+	ExitCode int    `json:"exitCode"`
+}
+
+func (*ShellResult) isResult() {}
