@@ -16,6 +16,7 @@ type Handler func() Runner
 var Registry = map[string]Handler{
 	(&protocol.EchoArgs{}).Action():  func() Runner { return &echo{} },
 	(&protocol.ShellArgs{}).Action(): func() Runner { return &shell{} },
+	(&protocol.HttpArgs{}).Action():  func() Runner { return &httpAc{} },
 }
 
 // get specific action from json

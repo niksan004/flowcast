@@ -1,6 +1,9 @@
 package protocol
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 const AgentRemotePath = "/tmp/flowcast-agent"
 
@@ -31,6 +34,15 @@ type ShellArgs struct {
 
 func (*ShellArgs) Action() string { return "shell" }
 
+type HttpArgs struct {
+	Url    string      `json:"url" yaml:"url"`
+	Method string      `json:"method" yaml:"method"`
+	Body   string      `json:"body" yaml:"body"`
+	Header http.Header `json:"header" yaml:"header"`
+}
+
+func (*HttpArgs) Action() string { return "http" }
+
 // result definitions
 type Result interface {
 	isResult()
@@ -49,3 +61,11 @@ type ShellResult struct {
 }
 
 func (*ShellResult) isResult() {}
+
+type HttpResult struct {
+	StatusCode int         `json:"statusCode"`
+	Header     http.Header `json:"header"`
+	Body       string      `json:"body"`
+}
+
+func (*HttpResult) isResult() {}

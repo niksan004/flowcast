@@ -1,22 +1,18 @@
 package steps
 
 import (
-	"fmt"
 	"golang.org/x/crypto/ssh"
-	"strings"
+	"project/internal/protocol"
 )
 
-type HTTPStep struct {
-	Url    string
-	Method string
+type HttpStep struct {
+	protocol.HttpArgs `yaml:",inline"`
 }
 
-func (step *HTTPStep) Execute(sesh *ssh.Session) (any, error) {
-	switch strings.ToUpper(step.Method) {
-	case "GET":
-		return fmt.Sprintf("GET req to: %s", step.Url), nil
-	case "POST":
-		return fmt.Sprintf("POST req to: %s", step.Url), nil
+func (step *HttpStep) Execute(sesh *ssh.Session) (any, error) {
+	var res protocol.HttpResult
+	if err := callAgent(sesh, &step.HttpArgs, &res); err != nil {
+		return nil, err
 	}
-	return nil, nil
+	return res, nil
 }

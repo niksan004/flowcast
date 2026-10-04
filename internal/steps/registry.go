@@ -22,7 +22,7 @@ type StepFactory func() StepExecutor
 var Registry = map[string]StepFactory{
 	"echo":    func() StepExecutor { return &EchoStep{} },
 	"set_var": func() StepExecutor { return &SetVarStep{} },
-	"http":    func() StepExecutor { return &HTTPStep{} },
+	"http":    func() StepExecutor { return &HttpStep{} },
 	"shell":   func() StepExecutor { return &ShellStep{} },
 	"if":      func() StepExecutor { return &IfStep{} },
 	"for":     func() StepExecutor { return &ForStep{} },

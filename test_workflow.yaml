@@ -12,11 +12,28 @@ steps:
 
   - name: echo
     value: "Hello world number 2"
-  #
-  # - name: http
-  #   url: https://jsonplaceholder.typicode.com/posts/1
-  #   method: GET
-  #
+
+  - name: http
+    url: https://httpbin.org/post
+    method: POST
+    headers:
+      Content-Type: application/json
+      X-Flowcast-Test: hello-from-agent
+    body: '{"host": "agent", "count": 3}'
+    save_as:
+      status: result.StatusCode
+      sent_header: 'result.Body contains "hello-from-agent"'
+      sent_body: 'result.Body contains "\"count\": 3"'
+
+  - name: if
+    condition: "status == 200 && sent_header && sent_body"
+    then:
+      - name: echo
+        value: "POST ok: header and body arrived"
+    else:
+      - name: echo
+        value: "POST check failed"
+  
   - name: shell
     cmd: rm showing_that_it_works.txt && rm count.txt
 

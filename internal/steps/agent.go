@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
-	"golang.org/x/crypto/ssh"
 	"project/internal/protocol"
+
+	"golang.org/x/crypto/ssh"
 )
 
 func callAgent(sesh *ssh.Session, args protocol.Args, res protocol.Result) error {
@@ -25,12 +27,13 @@ func callAgent(sesh *ssh.Session, args protocol.Args, res protocol.Result) error
 	}
 	sesh.Stdin = bytes.NewReader(req)
 
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
 	sesh.Stdout = &stdout
+	sesh.Stderr = &stderr
 
 	// execute agent with prepared input
 	if err := sesh.Run(protocol.AgentRemotePath); err != nil {
-		return err
+		return fmt.Errorf("agent failed: %w: stderr: %s", err, stderr.String())
 	}
 
 	// capture response
