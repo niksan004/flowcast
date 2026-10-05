@@ -15,8 +15,8 @@ func NewSFTPClient() *SFTPClient {
 
 func (sftpCl *SFTPClient) Upload(
 	conn *ssh.Client,
-	src string,
-	dest string,
+	src io.Reader,
+	destPath string,
 	mode os.FileMode,
 ) error {
 	// sftp connection to copy agent to remote
@@ -26,23 +26,18 @@ func (sftpCl *SFTPClient) Upload(
 	}
 	defer client.Close()
 
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := client.Create(dest)
+	dest, err := client.Create(destPath)
 	if err != nil {
 		return err
 	}
 
-	if _, err := io.Copy(out, in); err != nil {
+	// write with max concurrency
+	if _, err := dest.ReadFromWithConcurrency(src, -1); err != nil {
 		return err
 	}
-	defer out.Close()
+	defer dest.Close()
 
-	if err := client.Chmod(dest, 0755); err != nil {
+	if err := client.Chmod(destPath, 0755); err != nil {
 		return err
 	}
 

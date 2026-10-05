@@ -5,9 +5,11 @@ import (
 	"github.com/expr-lang/expr"
 	"golang.org/x/crypto/ssh"
 	"log/slog"
+	"project/internal/agentbin"
 	"project/internal/logger"
 	"project/internal/protocol"
 	"project/internal/steps"
+	"bytes"
 	"sync"
 )
 
@@ -124,7 +126,7 @@ func (eng *Engine) SetupAndRunSteps(host Host) error {
 	defer conn.Close()
 
 	// sftp connection to copy agent to remote
-	if err := eng.rt.SftpCl.Upload(conn, "agent-binary", protocol.AgentRemotePath, 0755); err != nil {
+	if err := eng.rt.SftpCl.Upload(conn, bytes.NewReader(agentbin.Linux_amd64), protocol.AgentRemotePath, 0755); err != nil {
 		return fmt.Errorf("error while tring to build sftp connection: %w", err)
 	}
 
