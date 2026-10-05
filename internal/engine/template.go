@@ -25,15 +25,8 @@ func renderData(data map[string]any, env map[string]any) (map[string]any, error)
 			continue
 		}
 
-		// skip non-string fields
-		stringVal, ok := val.(string)
-		if !ok {
-			renderedData[key] = val
-			continue
-		}
-
-		// render string fields
-		renderedString, err := renderString(stringVal, env)
+		// render fields
+		renderedString, err := renderVal(val, env)
 		if err != nil {
 			return nil, err
 		}
@@ -43,26 +36,51 @@ func renderData(data map[string]any, env map[string]any) (map[string]any, error)
 	return renderedData, nil
 }
 
-func renderString(s string, env map[string]any) (string, error) {
-	var evalErr error
-
-	out := regex.ReplaceAllStringFunc(s, func(match string) string {
-		expression := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(match, "{{"), "}}"))
-		val, err := expr.Eval(expression, env)
-		// report first error only
-		if evalErr != nil {
-			return ""
+func renderVal(val any, env map[string]any) (any, error) {
+	switch val := val.(type) {
+	case string:
+		var evalErr error
+		out := regex.ReplaceAllStringFunc(val, func(match string) string {
+			expression := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(match, "{{"), "}}"))
+			val, err := expr.Eval(expression, env)
+			// report first error only
+			if evalErr != nil {
+				return ""
+			}
+			if err != nil {
+				evalErr = err
+				return ""
+			}
+			if val == nil {
+				evalErr = fmt.Errorf("Undefined variable while evaluating %s", expression)
+				return ""
+			}
+			return fmt.Sprint(val)
+		})
+		return out, nil
+	// recurse into maps
+	case map[string]any:
+		out := make(map[string]any, len(val))
+		for k, v := range val {
+			renderedV, err := renderVal(v, env)
+			if err != nil {
+				return nil, err
+			}
+			out[k] = renderedV
 		}
-		if err != nil {
-			evalErr = err
-			return ""
+		return out, nil
+	// recurse into slices
+	case []any:
+		out := make([]any, len(val))
+		for i, v := range val {
+			renderedV, err := renderVal(v, env)
+			if err != nil {
+				return nil, err
+			}
+			out[i] = renderedV
 		}
-		if val == nil {
-			evalErr = fmt.Errorf("Undefined variable while evaluating %s", expression)
-			return ""
-		}
-		return fmt.Sprint(val)
-	})
-
-	return out, evalErr
+		return out, nil
+	default:
+		return val, nil
+	}
 }
