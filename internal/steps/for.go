@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"github.com/expr-lang/expr"
 	"golang.org/x/crypto/ssh"
+	"time"
+)
+
+const (
+	defaultMaxIterations = 1000
 )
 
 type Looper interface {
@@ -11,8 +16,10 @@ type Looper interface {
 }
 
 type ForStep struct {
-	Condition string
-	Do        []RawStep
+	Condition     string        `yaml:"condition"`
+	Do            []RawStep     `yaml:"do"`
+	MaxIterations int           `yaml:"max_iterations"`
+	Delay         time.Duration `yaml:"delay"`
 }
 
 // dummy function so this satisies StepExecutor
@@ -20,19 +27,33 @@ func (step *ForStep) Execute(sesh *ssh.Session) (any, error) {
 	return nil, nil
 }
 
-func (step *ForStep) Loop(env map[string]any) ([]RawStep, error) {
-	res, err := expr.Eval(step.Condition, env)
-	if err != nil {
-		return nil, err
+func (step *ForStep) Run(env map[string]any, runBody func([]RawStep) error) error {
+	if step.MaxIterations == 0 {
+		step.MaxIterations = defaultMaxIterations
 	}
 
-	val, ok := res.(bool)
-	if !ok {
-		return nil, fmt.Errorf("Condition did not evaluate to a bool: %v", res)
+	for i := 0; i < step.MaxIterations; i++ {
+		res, err := expr.Eval(step.Condition, env)
+		if err != nil {
+			return err
+		}
+
+		val, ok := res.(bool)
+		if !ok {
+			return fmt.Errorf("condition did not evaluate to a bool: %v", res)
+		}
+
+		// break loop if condition if false
+		if !val {
+			break
+		}
+
+		// run loop if condition is true
+		if err := runBody(step.Do); err != nil {
+			return fmt.Errorf("error while running body: %w", err)
+		}
+		time.Sleep(step.Delay)
 	}
 
-	if val {
-		return step.Do, nil
-	}
-	return nil, nil
+	return nil
 }

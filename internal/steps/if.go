@@ -21,19 +21,19 @@ func (step *IfStep) Execute(sesh *ssh.Session) (any, error) {
 	return nil, nil
 }
 
-func (step *IfStep) Branch(env map[string]any) ([]RawStep, error) {
+func (step *IfStep) Run(env map[string]any, runBody func([]RawStep) error) error {
 	res, err := expr.Eval(step.Condition, env)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	val, ok := res.(bool)
 	if !ok {
-		return nil, fmt.Errorf("Condition did not evaluate to a bool: %v", res)
+		return fmt.Errorf("Condition did not evaluate to a bool: %v", res)
 	}
 
 	if val {
-		return step.Then, nil
+		return runBody(step.Then)
 	}
-	return step.Else, nil
+	return runBody(step.Else)
 }

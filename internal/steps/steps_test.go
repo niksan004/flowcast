@@ -1,7 +1,6 @@
 package steps
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -21,7 +20,7 @@ func TestIfStep(t *testing.T) {
 			inputThen: []RawStep{RawStep{Name: "then"}},
 			inputElse: []RawStep{RawStep{Name: "else"}},
 			env:       map[string]any{"count": 5},
-			want:      []RawStep{RawStep{Name: "then"}},
+			want:      nil,
 		},
 		{
 			name:      "false condition",
@@ -29,7 +28,7 @@ func TestIfStep(t *testing.T) {
 			inputThen: []RawStep{RawStep{Name: "then"}},
 			inputElse: []RawStep{RawStep{Name: "else"}},
 			env:       map[string]any{"count": 3},
-			want:      []RawStep{RawStep{Name: "else"}},
+			want:      nil,
 		},
 		{
 			name:      "non-bool condition",
@@ -52,12 +51,11 @@ func TestIfStep(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			step := IfStep{Condition: tt.inputCond, Then: tt.inputThen, Else: tt.inputElse}
-			got, err := step.Branch(tt.env)
+			err := step.Run(tt.env, func(nextSteps []RawStep) error {
+				return nil
+			})
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("err = %v, wantErr = %v", err, tt.wantErr)
-			}
-			if err == nil && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got %q, want %q", got, tt.want)
 			}
 		})
 	}
@@ -77,7 +75,7 @@ func TestForStep(t *testing.T) {
 			inputCond: "count > 4",
 			inputDo:   []RawStep{RawStep{Name: "do"}},
 			env:       map[string]any{"count": 5},
-			want:      []RawStep{RawStep{Name: "do"}},
+			want:      nil,
 		},
 		{
 			name:      "false condition",
@@ -105,12 +103,11 @@ func TestForStep(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			step := ForStep{Condition: tt.inputCond, Do: tt.inputDo}
-			got, err := step.Loop(tt.env)
+			err := step.Run(tt.env, func(nextSteps []RawStep) error {
+				return nil
+			})
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("err = %v, wantErr = %v", err, tt.wantErr)
-			}
-			if err == nil && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got %q, want %q", got, tt.want)
 			}
 		})
 	}

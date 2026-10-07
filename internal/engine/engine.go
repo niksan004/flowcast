@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/expr-lang/expr"
 	"golang.org/x/crypto/ssh"
@@ -9,7 +10,6 @@ import (
 	"project/internal/logger"
 	"project/internal/protocol"
 	"project/internal/steps"
-	"bytes"
 	"sync"
 )
 
@@ -42,34 +42,14 @@ func runSteps(stepsSlice []steps.RawStep, client *ssh.Client, env map[string]any
 
 		log.Info("{Executing} " + logger.StringifyStruct(exec))
 
-		// determine how to execute next steps; normal step, if or loop
+		// determine how to execute next steps; normal step or control flow
 		switch exec := exec.(type) {
-		// check if there is a loop in the workflow
-		case steps.Looper:
-			// recursively loop steps if condition is true
-			// condition returns steps if true and empty slice if false
-			for {
-				nextSteps, err := exec.Loop(env)
-				if err != nil {
-					return fmt.Errorf("failed to loop: %w", err)
-				}
-				if len(nextSteps) == 0 {
-					break
-				}
-				if err := runSteps(nextSteps, client, env, log); err != nil {
-					return fmt.Errorf("failed to run steps while looping: %w", err)
-				}
-			}
-		// check if there is branching in the workflow
-		case steps.Brancher:
-			nextSteps, err := exec.Branch(env)
-			if err != nil {
-				return fmt.Errorf("failed to branch: %w", err)
-			}
-
-			// recursively run the steps after branching
-			if err := runSteps(nextSteps, client, env, log); err != nil {
-				return fmt.Errorf("failed to run steps while branching: %w", err)
+		// check if there is a control flow structure
+		case steps.ControlFlow:
+			if err := exec.Run(env, func(nextSteps []steps.RawStep) error {
+				return runSteps(nextSteps, client, env, log)
+			}); err != nil {
+				return fmt.Errorf("error while executing control flow step %s: %w", step.Name, err)
 			}
 		// normal step
 		default:

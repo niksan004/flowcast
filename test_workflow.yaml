@@ -66,6 +66,8 @@ steps:
 
   - name: for
     condition: "count < 3"
+    max_iterations: 10
+    delay: 0s
     do:
       - name: shell
         cmd: "echo Counting {{ count }} >> count.txt"
