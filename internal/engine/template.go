@@ -57,6 +57,9 @@ func renderVal(val any, env map[string]any) (any, error) {
 			}
 			return fmt.Sprint(val)
 		})
+		if evalErr != nil {
+			return nil, evalErr
+		}
 		return out, nil
 	// recurse into maps
 	case map[string]any:

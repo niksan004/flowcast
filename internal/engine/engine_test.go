@@ -8,7 +8,7 @@ import (
 func TestRenderString(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   string
+		input   any
 		env     map[string]any
 		want    string
 		wantErr bool
